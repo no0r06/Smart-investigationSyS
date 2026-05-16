@@ -1,4 +1,4 @@
-import { createContext, useState, type ReactNode } from 'react'
+import { createContext, useState, useEffect, type ReactNode } from 'react'
 
 type AuthContextValue = {
   isAuthenticated: boolean
@@ -15,8 +15,21 @@ export const AuthContext = createContext<AuthContextValue>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-  const login = () => setIsAuthenticated(true)
-  const logout = () => setIsAuthenticated(false)
+  // Check localStorage on mount
+  useEffect(() => {
+    const token = localStorage.getItem('fake_token')
+    setIsAuthenticated(!!token)
+  }, [])
+
+  const login = () => {
+    setIsAuthenticated(true)
+    localStorage.setItem('fake_token', 'fake_token_123')
+  }
+
+  const logout = () => {
+    setIsAuthenticated(false)
+    localStorage.removeItem('fake_token')
+  }
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, login, logout }}>

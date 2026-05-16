@@ -1,2 +1,1 @@
-// Static or mock data structures placeholder
-export {}
+export * from './mockData'
