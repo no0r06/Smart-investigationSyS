@@ -82,7 +82,9 @@ export default function CaseDetailsPage() {
               {suspectProfiles.map(profile => (
                 <div key={profile.id} className="rounded-2xl border border-slate-800/80 bg-slate-950/70 p-4">
                   <div className="text-sm text-slate-400">{profile.role}</div>
-                  <div className="mt-1 text-base font-semibold text-white">{profile.name} ({profile.alias})</div>
+                  <div className="mt-1 text-base font-semibold text-white">
+                    {profile.name} ({profile.alias})
+                  </div>
                   <div className="text-sm text-slate-500">Threat level: {profile.threatLevel}</div>
                   <div className="text-sm text-slate-500">Last seen: {profile.lastSeen}</div>
                 </div>
@@ -105,7 +107,9 @@ export default function CaseDetailsPage() {
                       className="block rounded-2xl border border-slate-800/80 bg-slate-950/70 p-4 text-sm text-slate-100 hover:bg-slate-900"
                     >
                       <div className="font-semibold text-white">{relatedCase.title}</div>
-                      <div className="text-slate-400">{relatedCase.status} • {relatedCase.location}</div>
+                      <div className="text-slate-400">
+                        {relatedCase.status} • {relatedCase.location}
+                      </div>
                     </Link>
                   ) : null
                 })
