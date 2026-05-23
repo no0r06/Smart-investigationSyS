@@ -1,38 +1,86 @@
-import { createContext, useState, useEffect, type ReactNode } from 'react'
+/* eslint-disable react-refresh/only-export-components */
+import { createContext, useContext, useState, type ReactNode } from 'react'
 
-type AuthContextValue = {
+export type Investigator = {
+  badgeId: string
+  displayName: string
+  role: string
+}
+
+export type AuthContextValue = {
   isAuthenticated: boolean
-  login: () => void
+  investigator: Investigator | null
+  login: (badgeId: string, sessionCode?: string) => Promise<boolean>
   logout: () => void
 }
 
-export const AuthContext = createContext<AuthContextValue>({
+const defaultValue: AuthContextValue = {
   isAuthenticated: false,
-  login: () => {},
+  investigator: null,
+  login: async () => false,
   logout: () => {},
-})
+}
+
+export const AuthContext = createContext<AuthContextValue>(defaultValue)
+
+export function useAuth() {
+  return useContext(AuthContext)
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [initialInvestigator] = useState<Investigator | null>(() => {
+    const inv = localStorage.getItem('nvest_investigator')
+    if (!inv) return null
+    try {
+      return JSON.parse(inv)
+    } catch {
+      localStorage.removeItem('nvest_investigator')
+      return null
+    }
+  })
 
-  // Check localStorage on mount
-  useEffect(() => {
-    const token = localStorage.getItem('fake_token')
-    setIsAuthenticated(!!token)
-  }, [])
+  const [initialAuth] = useState<boolean>(() => !!localStorage.getItem('nvest_session_token') && !!localStorage.getItem('nvest_investigator'))
 
-  const login = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(initialAuth)
+  const [investigator, setInvestigator] = useState<Investigator | null>(initialInvestigator)
+
+  const validateBadge = (badgeId: string) => {
+    const id = badgeId.trim().toUpperCase()
+    return /^(?:INV-)?\d+$/.test(id)
+  }
+
+  const login = async (badgeId: string, sessionCode?: string) => {
+    const id = badgeId.trim().toUpperCase()
+    if (!validateBadge(id)) return false
+
+    if (sessionCode && sessionCode.trim().toUpperCase() !== 'NVEST-2024') {
+      return false
+    }
+
+    const token = `session_${id}_${Date.now()}`
+    const inv: Investigator = {
+      badgeId: id,
+      displayName: `Investigator ${id}`,
+      role: 'Investigator',
+    }
+
+    localStorage.setItem('nvest_session_token', token)
+    localStorage.setItem('nvest_investigator', JSON.stringify(inv))
+
+    setInvestigator(inv)
     setIsAuthenticated(true)
-    localStorage.setItem('fake_token', 'fake_token_123')
+    return true
   }
 
   const logout = () => {
     setIsAuthenticated(false)
-    localStorage.removeItem('fake_token')
+    setInvestigator(null)
+    localStorage.removeItem('nvest_session_token')
+    localStorage.removeItem('nvest_investigator')
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, investigator, login, logout }}>
       {children}
     </AuthContext.Provider>
   )

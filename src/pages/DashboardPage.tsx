@@ -1,6 +1,7 @@
 import AlertBadge from '../components/AlertBadge'
 import CaseCard from '../components/CaseCard'
 import { cases, relationships, activityFeed } from '../data'
+import { assetImages } from '../utils/imageAssets'
 
 export default function DashboardPage() {
   // ---- SYSTEM LOGIC ----
@@ -12,11 +13,12 @@ export default function DashboardPage() {
     c => c.severity === 'High' || c.severity === 'Critical'
   )
 
-  // Spotlight logic (highest risk active case)
+  // FIXED: avoid mutating original array
   const spotlightCase =
-    activeCases.sort((a, b) => b.riskScore - a.riskScore)[0] || cases[0]
+    [...activeCases]
+      .sort((a, b) => b.riskScore - a.riskScore)[0] || cases[0]
 
-  // Top links
+  // Top links (safe copy before sorting)
   const topLinks = [...relationships]
     .sort((a, b) => b.similarity - a.similarity)
     .slice(0, 3)
@@ -48,18 +50,24 @@ export default function DashboardPage() {
       </section>
 
       {/* 2. MAIN SPOTLIGHT CASE */}
-      <section className="rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6">
-        <div className="flex items-center justify-between">
+      <section className="relative overflow-hidden rounded-3xl border border-slate-800/80 bg-slate-900/70 p-6">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(239,68,68,0.08),_transparent_30%),linear-gradient(135deg,_rgba(15,23,42,0.2),_transparent_55%)]" />
+        <div className="relative flex items-center justify-between">
           <h2 className="text-xl font-semibold text-white">
             Active Investigation Focus
           </h2>
           <AlertBadge label="Priority Case" variant="critical" />
         </div>
 
-        <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-center">
+        <div className="relative mt-4 flex flex-col gap-4 lg:flex-row lg:items-center">
           <img
-            src={spotlightCase.image}
-            className="h-40 w-40 rounded-2xl object-cover"
+            src={assetImages.spotlight}
+            alt="Spotlight case"
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.src = assetImages.analysisBg
+            }}
+            className="h-40 w-40 rounded-2xl object-cover ring-1 ring-red-500/20 shadow-[0_12px_40px_rgba(127,29,29,0.25)]"
           />
 
           <div className="flex-1">
@@ -80,9 +88,26 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+        <div className="fixed bottom-6 right-6 z-10 w-52 overflow-hidden rounded-2xl border border-red-500/35 bg-slate-950/85 shadow-[0_16px_40px_rgba(127,29,29,0.28)] transition duration-300 hover:opacity-100 hover:scale-[1.01] opacity-70">
+          <div className="relative">
+            <img
+              src={assetImages.cinematicBg}
+              alt="Live surveillance feed"
+              loading="lazy"
+              className="h-28 w-full object-cover"
+              onError={(event) => {
+                event.currentTarget.src = assetImages.spotlight
+              }}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 bg-black/70 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.28em] text-red-300">
+              LIVE SURVEILLANCE FEED
+            </div>
+          </div>
+        </div>
       </section>
 
-      {/* 3. ACTIVE CASES QUEUE + INTELLIGENCE FEED */}
+      {/* 3. ACTIVE CASES + INTELLIGENCE FEED */}
       <section className="grid gap-4 lg:grid-cols-2">
 
         {/* ACTIVE CASES */}
